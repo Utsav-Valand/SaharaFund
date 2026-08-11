@@ -10,6 +10,7 @@ import DiscoverPage from './pages/DiscoverPage'
 import CampaignDetailPage from './pages/CampaignDetailPage'
 import CreateFundraiserPage from './pages/CreateFundraiserPage'
 import NotFoundPage from './pages/NotFoundPage'
+import HowItWorksPage from './pages/HowItWorksPage'
 
 // Auth Pages
 import LoginPage from './pages/LoginPage'
@@ -51,7 +52,7 @@ export default function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/discover" element={<DiscoverPage />} />
         <Route path="/campaign/:id" element={<CampaignDetailPage />} />
-        <Route path="/how-it-works" element={<PlaceholderPage title="How It Works" />} />
+        <Route path="/how-it-works" element={<HowItWorksPage />} />
         <Route path="/trust-safety" element={<PlaceholderPage title="Trust & Safety" />} />
         <Route path="/transparency" element={<PlaceholderPage title="Transparency" />} />
         <Route path="/pricing" element={<PlaceholderPage title="Fees & Pricing" />} />
