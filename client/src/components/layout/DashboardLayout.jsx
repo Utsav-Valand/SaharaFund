@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, Megaphone, HandCoins, BarChart2,
   User, ShieldCheck, CreditCard, Bell, Lock,
-  ChevronRight, Menu, X, LogOut, Activity
+  ChevronRight, Menu, X, LogOut, Activity, Heart
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import Avatar from '../ui/Avatar'

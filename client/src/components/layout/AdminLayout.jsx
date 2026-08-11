@@ -3,7 +3,7 @@ import { NavLink, Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Shield, LayoutDashboard, Megaphone, Users, AlertTriangle,
-  HandCoins, FileText, BarChart2, Tags, Bell, X, Menu, LogOut
+  HandCoins, FileText, BarChart2, Tags, Bell, X, Menu, LogOut, Heart
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import Avatar from '../ui/Avatar'
