@@ -66,4 +66,38 @@ export const adminService = {
     const res = await api.get('/admin/categories')
     return res.data
   },
+
+  // ─── Phase 2: Verifications ─────────────────────────────────────────────────
+  getVerifications: async (params = {}) => {
+    const res = await api.get('/admin/verifications', { params })
+    return res.data
+  },
+
+  reviewVerification: async (id, reviewData) => {
+    const res = await api.patch(`/admin/verifications/${id}`, reviewData)
+    return res.data
+  },
+
+  // ─── Phase 2: Payouts ────────────────────────────────────────────────────────
+  getPayouts: async (params = {}) => {
+    const res = await api.get('/admin/payouts', { params })
+    return res.data
+  },
+
+  reviewPayout: async (id, reviewData) => {
+    const res = await api.patch(`/admin/payouts/${id}`, reviewData)
+    return res.data
+  },
+
+  // ─── Phase 2: Donations Overview ─────────────────────────────────────────────
+  getDonations: async (params = {}) => {
+    const res = await api.get('/admin/donations', { params })
+    return res.data
+  },
+
+  // ─── Phase 2: Audit Log ───────────────────────────────────────────────────────
+  getAuditLog: async (params = {}) => {
+    const res = await api.get('/admin/audit-log', { params })
+    return res.data
+  },
 }

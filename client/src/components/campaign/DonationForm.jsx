@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Heart, Loader2, Smartphone, CreditCard, Building2, QrCode, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Heart, Loader2, CreditCard, QrCode, CheckCircle2, AlertCircle } from 'lucide-react'
 import { paymentService } from '../../services/paymentService'
 import { donationService } from '../../services/donationService'
 import { formatCurrency, DONATION_PRESETS } from '../../utils/helpers'
@@ -56,6 +56,23 @@ export default function DonationForm({ campaign, onClose, onSuccess }) {
 
       if (!orderData.success) {
         throw new Error(orderData.message || 'Failed to create payment order.')
+      }
+
+      // Development sandbox mode (works without Razorpay live credentials)
+      if (orderData.order?.id?.startsWith('order_dev_')) {
+        const verification = await paymentService.verifyPayment({
+          donationId: orderData.donationId,
+          razorpay_order_id: orderData.order.id,
+          razorpay_payment_id: 'pay_dev_' + Date.now(),
+          razorpay_signature: 'dev_mock_signature',
+        })
+        if (verification.success) {
+          setCompletedDonation(verification.donation)
+          setStep('success')
+          toast.success('Donation successful! Thank you for your support ❤️')
+          if (onSuccess) onSuccess(verification.donation)
+          return
+        }
       }
 
       // Check if Razorpay SDK loaded

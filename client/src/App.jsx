@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+﻿import { Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { ProtectedRoute, RoleGuard, GuestOnly } from './components/auth/RouteGuards'
 import { Suspense, lazy } from 'react'
@@ -24,12 +24,16 @@ import MyDonationsPage from './pages/dashboard/MyDonationsPage'
 import ProfilePage from './pages/dashboard/ProfilePage'
 import NotificationsPage from './pages/dashboard/NotificationsPage'
 import SecurityPage from './pages/dashboard/SecurityPage'
+import VerificationPage from './pages/dashboard/VerificationPage'
+import PayoutPage from './pages/dashboard/PayoutPage'
 
 // Admin Pages
 import AdminDashboardPage from './pages/admin/AdminDashboardPage'
 import AdminCampaignsPage from './pages/admin/AdminCampaignsPage'
 import AdminFraudPage from './pages/admin/AdminFraudPage'
 import AdminUsersPage from './pages/admin/AdminUsersPage'
+import AdminVerificationsPage from './pages/admin/AdminVerificationsPage'
+import AdminPayoutsPage from './pages/admin/AdminPayoutsPage'
 
 // Placeholder for pages not yet built
 function PlaceholderPage({ title }) {
@@ -38,7 +42,7 @@ function PlaceholderPage({ title }) {
       <div className="text-center p-8">
         <div className="text-5xl mb-4">🚧</div>
         <h2 className="text-xl font-bold text-gray-900 mb-2">{title}</h2>
-        <p className="text-gray-500 text-sm">This page is coming soon in Phase 2.</p>
+        <p className="text-gray-500 text-sm">This page is coming soon.</p>
       </div>
     </div>
   )
@@ -80,8 +84,9 @@ export default function App() {
         <Route path="/dashboard/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
         <Route path="/dashboard/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
         <Route path="/dashboard/security" element={<ProtectedRoute><SecurityPage /></ProtectedRoute>} />
-        <Route path="/dashboard/verification" element={<ProtectedRoute><PlaceholderPage title="Verification" /></ProtectedRoute>} />
-        <Route path="/dashboard/payout" element={<ProtectedRoute><PlaceholderPage title="Bank & Payout" /></ProtectedRoute>} />
+        {/* Phase 2 routes */}
+        <Route path="/dashboard/verification" element={<ProtectedRoute><VerificationPage /></ProtectedRoute>} />
+        <Route path="/dashboard/payout" element={<ProtectedRoute><PayoutPage /></ProtectedRoute>} />
         <Route path="/dashboard/campaigns/:id/updates" element={<ProtectedRoute><PlaceholderPage title="Campaign Updates" /></ProtectedRoute>} />
         <Route path="/dashboard/campaigns/:id/analytics" element={<ProtectedRoute><PlaceholderPage title="Campaign Analytics" /></ProtectedRoute>} />
 
@@ -90,6 +95,9 @@ export default function App() {
         <Route path="/admin/campaigns" element={<RoleGuard allowedRoles={['admin']}><AdminCampaignsPage /></RoleGuard>} />
         <Route path="/admin/fraud" element={<RoleGuard allowedRoles={['admin']}><AdminFraudPage /></RoleGuard>} />
         <Route path="/admin/users" element={<RoleGuard allowedRoles={['admin']}><AdminUsersPage /></RoleGuard>} />
+        {/* Phase 2 admin routes */}
+        <Route path="/admin/verifications" element={<RoleGuard allowedRoles={['admin']}><AdminVerificationsPage /></RoleGuard>} />
+        <Route path="/admin/payouts" element={<RoleGuard allowedRoles={['admin']}><AdminPayoutsPage /></RoleGuard>} />
         <Route path="/admin/donations" element={<RoleGuard allowedRoles={['admin']}><PlaceholderPage title="Admin Donations" /></RoleGuard>} />
         <Route path="/admin/reports" element={<RoleGuard allowedRoles={['admin']}><PlaceholderPage title="Admin Reports" /></RoleGuard>} />
         <Route path="/admin/analytics" element={<RoleGuard allowedRoles={['admin']}><PlaceholderPage title="Platform Analytics" /></RoleGuard>} />

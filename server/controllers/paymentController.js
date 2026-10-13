@@ -157,10 +157,22 @@ export const createPaymentOrder = async (req, res) => {
       paymentStatus: 'created',
     })
 
-    // Create Razorpay order
+    // Create Razorpay order (or dev sandbox order if credentials not configured)
+    const isMockMode = !process.env.RAZORPAY_KEY_ID ||
+      !process.env.RAZORPAY_KEY_SECRET ||
+      process.env.RAZORPAY_KEY_ID.includes('REPLACE') ||
+      process.env.RAZORPAY_KEY_ID.includes('xxxx')
+
     let razorpayOrder
-    try {
-      razorpayOrder = await getRazorpay().orders.create({
+    if (isMockMode) {
+      razorpayOrder = {
+        id: 'order_dev_' + donation._id,
+        amount: Math.round(numAmount * 100),
+        currency: 'INR',
+      }
+    } else {
+      try {
+        razorpayOrder = await getRazorpay().orders.create({
         amount: Math.round(numAmount * 100), // Razorpay expects paise
         currency: 'INR',
         receipt: donation._id.toString(),
@@ -180,6 +192,7 @@ export const createPaymentOrder = async (req, res) => {
       })
     }
 
+    }
     // Store gateway order ID in donation
     await Donation.findByIdAndUpdate(donation._id, {
       gatewayOrderId: razorpayOrder.id,
@@ -259,6 +272,21 @@ export const verifyRazorpayPayment = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: 'Payment order ID mismatch. Verification failed.',
+      })
+    }
+
+    // Development sandbox mode verification
+    if (razorpay_order_id.startsWith('order_dev_')) {
+      const completed = await completeDonation(
+        donation,
+        razorpay_payment_id || ('pay_dev_' + Date.now()),
+        razorpay_signature || 'dev_mock_signature',
+        { provider: 'razorpay_dev_mock' }
+      )
+      return res.status(200).json({
+        success: true,
+        message: 'Payment verified successfully (Development Mode).',
+        donation: sanitizeDonation(completed),
       })
     }
 
