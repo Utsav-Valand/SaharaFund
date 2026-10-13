@@ -52,15 +52,26 @@ app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')))
 
 // CORS Configuration
 const allowedOrigins = [
-  process.env.CLIENT_URL || 'http://localhost:5173',
+  ...(process.env.CLIENT_URL ? process.env.CLIENT_URL.split(',').map((url) => url.trim()) : ['http://localhost:5173']),
   'http://localhost:5173',
   'http://127.0.0.1:5173',
 ]
 
+// Optional dedicated staging client origin
+if (process.env.STAGING_CLIENT_URL) {
+  allowedOrigins.push(process.env.STAGING_CLIENT_URL.trim())
+}
+
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
+      // In staging/test mode, safely allow Netlify deploy preview subdomains
+      const isNetlifyPreview =
+        process.env.PAYMENT_MODE !== 'live' &&
+        typeof origin === 'string' &&
+        /^https:\/\/deploy-preview-\d+--[\w-]+\.netlify\.app$/.test(origin)
+
+      if (!origin || allowedOrigins.includes(origin) || isNetlifyPreview) {
         callback(null, true)
       } else {
         callback(new Error(`CORS policy blocked access from origin: ${origin}`))
