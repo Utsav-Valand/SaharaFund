@@ -3,9 +3,12 @@ import Campaign from '../models/Campaign.js'
 import Notification from '../models/Notification.js'
 
 /**
- * @desc    Create a new donation
+ * @desc    Create a new donation (legacy mock mode OR initial record for gateway)
  * @route   POST /api/donations
  * @access  Public (Optional Auth for logged-in donors)
+ *
+ * In production with Razorpay, use POST /api/payments/create-order instead.
+ * This endpoint is kept for backward compatibility and mock/test donations.
  */
 export const createDonation = async (req, res) => {
   try {
@@ -18,7 +21,6 @@ export const createDonation = async (req, res) => {
       isAnonymous = false,
       comment = '',
       paymentProvider = 'mock',
-      autoComplete = true, // Set to true for mock / direct sandboxes
     } = req.body
 
     if (!campaignId || !amount || !donorName || !donorEmail) {
@@ -36,41 +38,50 @@ export const createDonation = async (req, res) => {
       })
     }
 
+    if (numAmount > 5000000) {
+      return res.status(400).json({
+        success: false,
+        message: 'Maximum donation is ₹50,00,000 per transaction.',
+      })
+    }
+
     const campaign = await Campaign.findById(campaignId)
     if (!campaign) {
       return res.status(404).json({ success: false, message: 'Campaign not found.' })
     }
 
-    if (campaign.status !== 'active' && campaign.status !== 'completed') {
+    if (campaign.status !== 'active') {
       return res.status(400).json({
         success: false,
         message: 'This campaign is not currently accepting donations.',
       })
     }
 
-    const initialStatus = autoComplete ? 'completed' : 'pending'
+    // Mock mode: only auto-complete if PAYMENT_MODE=test and provider is mock
+    const isMockMode =
+      paymentProvider === 'mock' &&
+      (process.env.PAYMENT_MODE === 'test' || process.env.NODE_ENV === 'development')
 
     const donation = await Donation.create({
       campaign: campaign._id,
-      donor: req.user ? req.user._id : null,
+      donor: req.user?._id || null,
       amount: numAmount,
       tipAmount: Number(tipAmount) || 0,
       currency: campaign.currency || 'INR',
       donorName: donorName.trim(),
       donorEmail: donorEmail.toLowerCase().trim(),
       isAnonymous: Boolean(isAnonymous),
-      comment: comment ? comment.trim() : '',
+      comment: comment.trim(),
       paymentProvider,
-      paymentStatus: initialStatus,
+      paymentStatus: isMockMode ? 'completed' : 'created',
     })
 
-    // If completed immediately, update campaign statistics
-    if (initialStatus === 'completed') {
+    // Only update campaign if mock-completed immediately
+    if (isMockMode) {
       await Campaign.findByIdAndUpdate(campaign._id, {
         $inc: { raisedAmount: numAmount, donorCount: 1 },
       })
 
-      // Send in-app notification to the campaign organizer
       await Notification.create({
         recipient: campaign.organizer,
         type: 'donation_received',
@@ -78,13 +89,13 @@ export const createDonation = async (req, res) => {
         message: `${isAnonymous ? 'An anonymous supporter' : donorName} donated ₹${numAmount.toLocaleString('en-IN')} to "${campaign.title}".`,
         relatedCampaign: campaign._id,
         relatedDonation: donation._id,
-        actionUrl: `/campaign/${campaign._id}`,
+        actionUrl: `/dashboard`,
       })
     }
 
     return res.status(201).json({
       success: true,
-      message: 'Donation processed successfully.',
+      message: isMockMode ? 'Donation processed (mock mode).' : 'Donation record created.',
       donation,
     })
   } catch (error) {
@@ -94,13 +105,16 @@ export const createDonation = async (req, res) => {
 }
 
 /**
- * @desc    Verify payment callback
+ * @desc    Verify payment callback (legacy mock verification)
  * @route   POST /api/donations/verify
  * @access  Public
+ *
+ * For real Razorpay payments, use POST /api/payments/verify instead.
+ * This endpoint is kept for legacy/test usage only.
  */
 export const verifyPayment = async (req, res) => {
   try {
-    const { donationId, transactionId, paymentDetails } = req.body
+    const { donationId, transactionId } = req.body
 
     const donation = await Donation.findById(donationId)
     if (!donation) {
@@ -115,20 +129,24 @@ export const verifyPayment = async (req, res) => {
       })
     }
 
+    // SECURITY: Only allow verification of mock donations via this endpoint
+    if (donation.paymentProvider !== 'mock') {
+      return res.status(400).json({
+        success: false,
+        message: 'Use /api/payments/verify for gateway payments.',
+      })
+    }
+
     donation.paymentStatus = 'completed'
     if (transactionId) donation.transactionId = transactionId
-    if (paymentDetails) donation.paymentDetails = paymentDetails
-
     await donation.save()
 
-    // Update campaign raisedAmount
     const campaign = await Campaign.findByIdAndUpdate(
       donation.campaign,
       { $inc: { raisedAmount: donation.amount, donorCount: 1 } },
       { new: true }
     )
 
-    // Notify organizer
     if (campaign) {
       await Notification.create({
         recipient: campaign.organizer,
@@ -159,7 +177,8 @@ export const getDonation = async (req, res) => {
   try {
     const donation = await Donation.findById(req.params.id)
       .populate('campaign', 'title slug coverImage organizer')
-      .populate('donor', 'name email')
+      .populate('donor', 'name')
+      .select('-gatewaySignature -donorEmail') // Never expose sensitive fields
 
     if (!donation) {
       return res.status(404).json({ success: false, message: 'Donation not found.' })
@@ -189,7 +208,7 @@ export const getCampaignDonations = async (req, res) => {
 
     const [donations, total] = await Promise.all([
       Donation.find(query)
-        .select('donorName amount isAnonymous comment createdAt')
+        .select('donorName amount isAnonymous comment createdAt paymentProvider')
         .sort('-createdAt')
         .skip((pageNum - 1) * limitNum)
         .limit(limitNum),
@@ -208,7 +227,7 @@ export const getCampaignDonations = async (req, res) => {
 }
 
 /**
- * @desc    Get donations made by the current user
+ * @desc    Get donations made by the current user (with receipt info)
  * @route   GET /api/donations/me
  * @access  Private
  */
@@ -218,6 +237,7 @@ export const getMyDonations = async (req, res) => {
       $or: [{ donor: req.user._id }, { donorEmail: req.user.email }],
     })
       .populate('campaign', 'title slug coverImage category status')
+      .select('-gatewaySignature') // Never expose signature
       .sort('-createdAt')
 
     return res.status(200).json({
