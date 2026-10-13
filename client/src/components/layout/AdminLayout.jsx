@@ -3,7 +3,8 @@ import { NavLink, Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Shield, LayoutDashboard, Megaphone, Users, AlertTriangle,
-  HandCoins, FileText, BarChart2, Tags, Bell, X, Menu, LogOut, Heart
+  HandCoins, FileText, BarChart2, Tags, Bell, X, Menu, LogOut, Heart,
+  ShieldCheck, CreditCard
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import Avatar from '../ui/Avatar'
@@ -30,6 +31,8 @@ const adminNav = [
     items: [
       { to: '/admin/users', icon: Users, label: 'Users' },
       { to: '/admin/donations', icon: HandCoins, label: 'Donations' },
+      { to: '/admin/verifications', icon: ShieldCheck, label: 'Verifications' },
+      { to: '/admin/payouts', icon: CreditCard, label: 'Payouts' },
     ],
   },
   {
