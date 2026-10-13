@@ -1,4 +1,4 @@
-﻿import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { ProtectedRoute, RoleGuard, GuestOnly } from './components/auth/RouteGuards'
 import { Suspense, lazy } from 'react'
@@ -11,6 +11,7 @@ import CampaignDetailPage from './pages/CampaignDetailPage'
 import CreateFundraiserPage from './pages/CreateFundraiserPage'
 import NotFoundPage from './pages/NotFoundPage'
 import HowItWorksPage from './pages/HowItWorksPage'
+import TrustSafetyPage from './pages/TrustSafetyPage'
 
 // Auth Pages
 import LoginPage from './pages/LoginPage'
@@ -57,7 +58,7 @@ export default function App() {
         <Route path="/discover" element={<DiscoverPage />} />
         <Route path="/campaign/:id" element={<CampaignDetailPage />} />
         <Route path="/how-it-works" element={<HowItWorksPage />} />
-        <Route path="/trust-safety" element={<PlaceholderPage title="Trust & Safety" />} />
+        <Route path="/trust-safety" element={<TrustSafetyPage />} />
         <Route path="/transparency" element={<PlaceholderPage title="Transparency" />} />
         <Route path="/pricing" element={<PlaceholderPage title="Fees & Pricing" />} />
         <Route path="/help" element={<PlaceholderPage title="Help Center" />} />
